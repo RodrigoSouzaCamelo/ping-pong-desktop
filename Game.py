@@ -1,6 +1,7 @@
 from tkinter import Canvas
 from Window import Window
 from Player import Player
+from Ball import Ball
 
 class Game():
     def __init__(self):
@@ -8,6 +9,7 @@ class Game():
         self.canvas = Canvas(self.window.root)
         self.playerOne = Player()
         self.playerTwo = Player()
+        self.ball = Ball()
         self.keys_press = {}
         self.configure_game()
 
@@ -16,13 +18,13 @@ class Game():
         self.playerOne.height = 160
         self.playerOne.x = 785
         self.playerOne.y = 240
-        self.playerOne.speed = 4
+        self.playerOne.speed = 1
 
         self.playerTwo.width = 5
         self.playerTwo.height = 160
         self.playerTwo.x = 15
         self.playerTwo.y = 240
-        self.playerTwo.speed = 4
+        self.playerTwo.speed = 1
 
     def configure_canvas(self):
         self.canvas.configure(background='black', width='800', height='400', highlightthickness=0)
@@ -56,16 +58,21 @@ class Game():
 
     def animate(self):
         self.move_players()
+        self.ball.move(self.canvas)
         self.draw()
 
     def draw(self):
         self.canvas.delete('all')
         self.draw_player(self.playerOne)
         self.draw_player(self.playerTwo)
-        self.window.root.after(10, self.animate)
+        self.draw_ball()
+        self.window.root.after(5, self.animate)
 
     def draw_player(self, player=Player):
         self.canvas.create_rectangle(player.width, player.height, player.x, player.y, fill='white')
+
+    def draw_ball(self):
+        self.canvas.create_rectangle(self.ball.width, self.ball.height, self.ball.x, self.ball.y, fill='white')
 
     def start_game(self):
         self.animate()
