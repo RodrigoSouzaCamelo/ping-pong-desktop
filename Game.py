@@ -1,80 +1,66 @@
 from tkinter import Canvas
-from Window import Window
 from Player import Player
-from Ball import Ball
+from GameConfig import GameConfig
+from GameBoard import GameBoard
 
-class Game():
+class Game(GameBoard):
     def __init__(self):
-        self.window = Window()
-        self.canvas = Canvas(self.window.root)
-        self.playerOne = Player()
-        self.playerTwo = Player()
-        self.ball = Ball()
-        self.keys_press = {}
+        super().__init__()
         self.configure_game()
-
-    def build_players(self):
-        self.playerOne.width = 795
-        self.playerOne.height = 160
-        self.playerOne.x = 785
-        self.playerOne.y = 240
-        self.playerOne.speed = 1
-
-        self.playerTwo.width = 5
-        self.playerTwo.height = 160
-        self.playerTwo.x = 15
-        self.playerTwo.y = 240
-        self.playerTwo.speed = 1
-
-    def configure_canvas(self):
-        self.canvas.configure(background='black', width='800', height='400', highlightthickness=0)
+        self.speed = self.game_config.speed_default
 
     def configure_game(self):
-        self.configure_canvas()
-        self.set_bindings_keys()
-        self.build_players()
+        self.game_config.configure_canvas(self.canvas)
+        self.game_config.set_bindings_keys(self.window)
+        self.to_position_players()
 
-    def set_bindings_keys(self):
-        for key in ["w","s","Up", "Down"]:
-            self.window.root.bind_all(f'<KeyPress {key}>', self.key_pressed_handler)
-            self.window.root.bind_all(f'<KeyRelease {key}>', self.key_released_handler)
-            self.keys_press[key] = False
-
-    def key_pressed_handler(self, event):
-        self.keys_press[event.keysym] = True
-
-    def key_released_handler(self, event):
-        self.keys_press[event.keysym] = False
-
-    def move_players(self):
-        if(self.keys_press['Up']):
+    def check_players_movement(self):
+        if(self.game_config.keys_press['Up']):
             self.playerOne.move_up()
-        if(self.keys_press['Down']):
+        if(self.game_config.keys_press['Down']):
             self.playerOne.move_down()
-        if(self.keys_press['w']):
+        if(self.game_config.keys_press['w']):
             self.playerTwo.move_up()
-        if(self.keys_press['s']):
+        if(self.game_config.keys_press['s']):
             self.playerTwo.move_down()
 
+    def check_scores(self):
+        if(self.ball.x >= 797 and self.check_player_lost(self.playerOne)):
+            self.playerTwo.score += 1
+            self.restart_game()
+        elif(self.ball.width <= 3 and self.check_player_lost(self.playerTwo)):
+            self.playerOne.score += 1
+            self.restart_game()
+        elif(self.ball.x >= 797 or self.ball.width <= 3):
+            self.set_game_speed(self.speed + 1)
+
+    def set_game_speed(self, speed):
+        self.speed = speed
+        self.ball.speed = self.speed
+        self.playerOne.speed = self.speed
+        self.playerTwo.speed = self.speed
+
+    def check_player_lost(self, player: Player):
+        return (self.check_is_lower_than_ball(player) or self.check_is_taller_than_ball(player))
+
+    def check_is_lower_than_ball(self, player: Player):
+        return player.height > self.ball.height
+
+    def check_is_taller_than_ball(self, player: Player):
+        return player.y < self.ball.height
+
     def animate(self):
-        self.move_players()
+        self.check_scores()
+        self.check_players_movement()
         self.ball.move(self.canvas)
         self.draw()
-
-    def draw(self):
-        self.canvas.delete('all')
-        self.draw_player(self.playerOne)
-        self.draw_player(self.playerTwo)
-        self.draw_ball()
-        self.window.root.after(5, self.animate)
-
-    def draw_player(self, player=Player):
-        self.canvas.create_rectangle(player.width, player.height, player.x, player.y, fill='white')
-
-    def draw_ball(self):
-        self.canvas.create_rectangle(self.ball.width, self.ball.height, self.ball.x, self.ball.y, fill='white')
+        self.window.root.after(10, self.animate)
 
     def start_game(self):
         self.animate()
         self.canvas.pack()
         self.window.build_window()
+
+    def restart_game(self):
+        self.center_game_pieces()
+        self.set_game_speed(self.game_config.speed_default)

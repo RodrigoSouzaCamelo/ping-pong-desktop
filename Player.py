@@ -5,6 +5,7 @@ class Player():
         self.x: int
         self.y: int
         self.speed: int
+        self.score:int = 0
 
     def move_up(self):
         if(self.height > 10):
